@@ -2,7 +2,9 @@ import pandas as pd
 import talib
 
 
-def super_trend(config: pd.DataFrame, data: pd.DataFrame, last_data: pd.DataFrame = None) -> pd.DataFrame:
+def super_trend(
+    config: pd.DataFrame, data: pd.DataFrame, last_data: pd.DataFrame = None
+) -> pd.DataFrame:
 
     def create_supet_trend_lines(period: int, multiplier: int) -> None:
         """Create SuperTrend lines for the given period and multiplier.
@@ -16,37 +18,41 @@ def super_trend(config: pd.DataFrame, data: pd.DataFrame, last_data: pd.DataFram
             multiplier (int): The multiplier to apply to the ATR for the SuperTrend lines.
         """
         # Define column names for ATR and SuperTrend lines
-        name_ATR = f'ATR {period}'
-        name_upper_line = f'UP {multiplier}'
-        name_lower_line = f'LOW {multiplier}'
+        name_ATR = f"ATR {period}"
+        name_upper_line = f"UP {multiplier}"
+        name_lower_line = f"LOW {multiplier}"
 
         # Calculate ATR for the given period
-        data[name_ATR] = talib.ATR(data['high'].values, data['low'].values, data['close'].values,
-                                   timeperiod=period)
+        data[name_ATR] = talib.ATR(
+            data["HIGH"].values,
+            data["LOW"].values,
+            data["CLOSE"].values,
+            timeperiod=period,
+        )
 
         # Calculate upper and lower SuperTrend lines using the multiplier
-        data[name_upper_line] = data['high'] + (multiplier * data[name_ATR])
-        data[name_lower_line] = data['low'] - (multiplier * data[name_ATR])
+        data[name_upper_line] = data["HIGH"] + (multiplier * data[name_ATR])
+        data[name_lower_line] = data["LOW"] - (multiplier * data[name_ATR])
 
         # Initialize columns for the SuperTrend values
-        data[f'ST {period} {multiplier} UP'] = pd.Series(dtype=float)
-        data[f'ST {period} {multiplier} LOW'] = pd.Series(dtype=float)
+        data[f"ST {period} {multiplier} UP"] = pd.Series(dtype=float)
+        data[f"ST {period} {multiplier} LOW"] = pd.Series(dtype=float)
 
     for params in config:
-        create_supet_trend_lines(params['period'], params['multiplier'])
+        create_supet_trend_lines(params["period"], params["multiplier"])
 
     # calculate SuperTrends
-    prev_trend = ['lower'] * len(config)
+    prev_trend = ["lower"] * len(config)
 
     if last_data is not None:
         prev_trend.clear()
         for params in config:
             upper = f'ST {params["period"]} {params["multiplier"]} UP'
             lower = f'ST {params["period"]} {params["multiplier"]} LOW'
-            if (not pd.isnull(last_data.iloc[-1][upper])):
-                prev_trend.append('upper')
-            elif (not pd.isnull(last_data.iloc[-1][lower])):
-                prev_trend.append('lower')
+            if not pd.isnull(last_data.iloc[-1][upper]):
+                prev_trend.append("upper")
+            elif not pd.isnull(last_data.iloc[-1][lower]):
+                prev_trend.append("lower")
             else:
                 raise ValueError("error:006 Something went wrong")
 
@@ -61,47 +67,53 @@ def super_trend(config: pd.DataFrame, data: pd.DataFrame, last_data: pd.DataFram
             trend (str): The previous trend (lower or upper).
         """
         # Check if the upper and lower SuperTrend lines are None
-        if pd.isnull(row[f'UP {prefix}']) or pd.isnull(row[f'LOW {prefix}']):
+        if pd.isnull(row[f"UP {prefix}"]) or pd.isnull(row[f"LOW {prefix}"]):
             # If there last data, copy the values from it
             if last_data is not None:
-                data.loc[index, name + ' UP'] = last_data.loc[index, name + ' UP']
-                data.loc[index, name + ' LOW'] = last_data.loc[index, name + ' LOW']
+                data.loc[index, name + " UP"] = last_data.loc[index, name + " UP"]
+                data.loc[index, name + " LOW"] = last_data.loc[index, name + " LOW"]
             # If last data is None, stop the calculation
             return
 
-        upper = round(row[f'UP {prefix}'], 2) if pd.isnull(data.loc[index - 1, name+' UP']
-                                                           ) else round(min(data.loc[index - 1, name+' UP'], row[f'UP {prefix}']), 2)
-        lower = round(row[f'LOW {prefix}'], 2) if pd.isnull(data.loc[index - 1, name+' LOW']
-                                                            ) else round(max(data.loc[index - 1, name+' LOW'], row[f'LOW {prefix}']), 2)
-        close = row['close']
-        open = row['open']
+        upper = (
+            round(row[f"UP {prefix}"], 2)
+            if pd.isnull(data.loc[index - 1, name + " UP"])
+            else round(min(data.loc[index - 1, name + " UP"], row[f"UP {prefix}"]), 2)
+        )
+        lower = (
+            round(row[f"LOW {prefix}"], 2)
+            if pd.isnull(data.loc[index - 1, name + " LOW"])
+            else round(max(data.loc[index - 1, name + " LOW"], row[f"LOW {prefix}"]), 2)
+        )
+        close = row["CLOSE"]
+        open = row["OPEN"]
 
-        if trend == 'lower':
+        if trend == "lower":
             if open >= lower:
                 if close >= lower:
-                    data.loc[index, name+' LOW'] = lower
+                    data.loc[index, name + " LOW"] = lower
                 elif close < lower:
-                    data.loc[index, name + ' UP'] = round(row[f'UP {prefix}'], 2)
-                    trend = 'upper'
+                    data.loc[index, name + " UP"] = round(row[f"UP {prefix}"], 2)
+                    trend = "upper"
                 else:
                     raise ValueError("error:001 Something went wrong")
             elif open < lower:
-                data.loc[index, name + ' UP'] = round(row[f'UP {prefix}'], 2)
-                trend = 'upper'
+                data.loc[index, name + " UP"] = round(row[f"UP {prefix}"], 2)
+                trend = "upper"
             else:
                 raise ValueError("error:002 Something went wrong")
-        elif trend == 'upper':
+        elif trend == "upper":
             if open <= upper:
                 if close <= upper:
-                    data.loc[index, name + ' UP'] = upper
+                    data.loc[index, name + " UP"] = upper
                 elif close > upper:
-                    data.loc[index, name + ' LOW'] = round(row[f'LOW {prefix}'], 2)
-                    trend = 'lower'
+                    data.loc[index, name + " LOW"] = round(row[f"LOW {prefix}"], 2)
+                    trend = "lower"
                 else:
                     raise ValueError("error:003 Something went wrong")
             elif open > upper:
-                data.loc[index, name + ' LOW'] = round(row[f'LOW {prefix}'], 2)
-                trend = 'lower'
+                data.loc[index, name + " LOW"] = round(row[f"LOW {prefix}"], 2)
+                trend = "lower"
             else:
                 raise ValueError("error:004 Something went wrong")
         else:
@@ -111,7 +123,11 @@ def super_trend(config: pd.DataFrame, data: pd.DataFrame, last_data: pd.DataFram
 
     for index, row in data.iterrows():
         for i, params in enumerate(config):
-            calculate_trend(params['multiplier'], f'ST {params['period']} {params['multiplier']}', prev_trend[i])
+            calculate_trend(
+                params["multiplier"],
+                f"ST {params['period']} {params['multiplier']}",
+                prev_trend[i],
+            )
 
     for params in config:
         columns_to_drop = [
