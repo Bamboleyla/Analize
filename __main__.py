@@ -7,9 +7,12 @@ import time
 from logging.handlers import RotatingFileHandler
 import pandas as pd
 
+from new_terminal import NewTerminal
 from services.download_and_update_quotes import download_and_update_quotes
 from services.manager import Manager
 from terminal import Terminal
+from myLib.strategies import PriceChanelGrid
+from myLib.brokers import DemoBroker
 
 logger = logging.getLogger(__name__)
 
@@ -75,8 +78,9 @@ if __name__ == "__main__":
 
     MESSAGE = """Choose mode:
 1 - download historical data;
-2 - show;
-3 - optimize;
+2 - show PriceChanelGrid;
+3 - show WithDoubleTrend;
+4 - optimize;
 0 - exit;
                         
 Please, enter mode:"""
@@ -86,8 +90,58 @@ Please, enter mode:"""
     # Download historical data
     if mode == 1:
         download_and_update_quotes()
-    # Show
     elif mode == 2:
+        # Show PriceChanelGrid
+        start_time = time.time()
+        manager = Manager("SBER")
+        quotes = manager.get_quotes()
+        quotes_completed = time.time()
+        print(
+            "Quotes completed..." + str(round(quotes_completed - start_time, 3)) + "s"
+        )
+
+        directory = manager.get_directory()
+        broker = DemoBroker()
+
+        config = {
+            "indicators": [
+                {"type": "price_chanel", "period": 30},
+                {"type": "super_trend", "period": 30, "multiplier": 7},
+            ],
+            "share": {"tiker": "SBER", "figi": "BBG004730N88"},
+        }
+        strategy = PriceChanelGrid(broker, config)
+        terminal = NewTerminal(strategy)
+
+        # Create empty DataFrame with columns
+        explore_date = pd.DataFrame(
+            columns=["TICKER", "DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"]
+        )
+        # Calculate data
+        explore_date = terminal.prepare(quotes=quotes)
+        # Write DataFrame to file
+        explore_date.to_csv(
+            os.path.join(directory, "price_chanel_grid.csv"), index=False
+        )
+        data_completed = time.time()
+        print(
+            "Data completed..." + str(round(data_completed - quotes_completed, 3)) + "s"
+        )
+
+        explore_date = terminal.calculate(explore_date)
+        calculate_completed = time.time()
+        print(
+            "Calculate completed..."
+            + str(round(calculate_completed - data_completed, 3))
+            + "s"
+        )
+        explore_date.to_csv(
+            os.path.join(directory, "price_chanel_report.csv"), index=False
+        )
+        terminal.report(explore_date)
+        terminal.show(explore_date)
+    # Show SuperTrends strategy
+    elif mode == 3:
         start_time = time.time()
         manager = Manager("SBER")
         quotes = manager.get_quotes()
@@ -138,14 +192,13 @@ Please, enter mode:"""
         print("Start show...")
         terminal.show(data=data, config=config)
     # Optimize
-    elif mode == 3:
+    elif mode == 4:
         manager = Manager("SBER")
 
         data = pd.read_csv(manager.get_terminal_path(), header=0)
 
         terminal = Terminal(manager.get_directory())
         terminal.optimize(data, {"start": 1.0, "step": 0.1, "end": 3.0})
-
     # Exit
     elif mode == 0:
         print("Program exit")

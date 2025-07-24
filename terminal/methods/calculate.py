@@ -10,8 +10,8 @@ Functions:
 
 from datetime import datetime
 import pandas as pd
-from myLib.brokers import Brokers
-from myLib.strategies import Strategies
+from myLib.brokers import DemoBroker
+from myLib.strategies import WithDoubleTrend
 
 
 def calculate_method(
@@ -33,11 +33,9 @@ def calculate_method(
     processing each row of input data and generating market orders based on strategy logic.
     """
 
-    broker = Brokers()
-    demo_broker = broker.demo
+    demo_broker = DemoBroker()
 
-    strategies = Strategies()
-    with_dt = strategies.double_super_trend(demo_broker)
+    with_dt = WithDoubleTrend(demo_broker)
 
     for index, row in data.iterrows():
         demo_broker.run(row, index)
@@ -47,6 +45,8 @@ def calculate_method(
             demo_broker.create_order(
                 {
                     "id": datetime.now().timestamp(),
+                    "ticker": row["TICKER"],
+                    "date": row["DATE"],
                     "strategy": with_dt.name,
                     "signal": "LONG_SELL",
                     "order": "MARKET_SELL",
@@ -54,8 +54,7 @@ def calculate_method(
                 }
             )
 
-        with_dt.run(row)
-
+        with_dt.run(row, data.iloc[index - 1])
     order_list = demo_broker.get_orders_log()
 
     return data.join(order_list), with_dt.get_plot_data()

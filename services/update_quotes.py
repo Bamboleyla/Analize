@@ -4,10 +4,9 @@ import logging
 import os
 from datetime import datetime, timezone, timedelta
 import pandas as pd
-from myLib import Brokers
+from myLib.brokers import Alor
 
 logger = logging.getLogger(__name__)
-brokers = Brokers()
 
 
 def update_quotes(file_path: str, ticker: str) -> None:
@@ -51,7 +50,8 @@ def update_quotes(file_path: str, ticker: str) -> None:
             quotes.iloc[-1]["DATE"], "%Y%m%d %H:%M:%S"
         ).replace(tzinfo=timezone(timedelta(hours=3)))
 
-    data = brokers.alor.downloader.get_quotes(
+    broker = Alor()  # create broker
+    data = broker.downloader.get_quotes(
         ticker=ticker, start_date=last_date, tf=300
     )  # get data from last date to now
 

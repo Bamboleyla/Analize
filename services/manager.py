@@ -2,7 +2,6 @@ import logging
 import os
 import pandas as pd
 import talib
-import json
 
 from indicators.super_trend import super_trend
 
@@ -16,9 +15,6 @@ class Manager:
         self.__dir = os.path.join(
             os.path.dirname(os.path.dirname(__file__)) + "\\tickers\\", ticker
         )  # file path to ticker directory
-        with open(os.path.join(self.__dir, "config.json"), "r") as f:
-            config = json.load(f)
-            self.__super_trends = config["indicators"]["super_trends"]
 
     def get_quotes(self) -> pd.DataFrame:
         quotes = pd.read_csv(self.__dir + "\\data.csv", header=0)
