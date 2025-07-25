@@ -1,12 +1,9 @@
 """In this file is the function update_quotes which updates the quotes"""
 
-import logging
 import os
 from datetime import datetime, timezone, timedelta
 import pandas as pd
 from myLib.brokers import Alor
-
-logger = logging.getLogger(__name__)
 
 
 def update_quotes(file_path: str, ticker: str) -> None:

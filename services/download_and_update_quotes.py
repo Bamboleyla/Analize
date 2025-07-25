@@ -1,13 +1,7 @@
 """This file contains the download_and_update_quotes function, which uploads and updates the quotes data"""
 
-import logging
 import os
-import pandas as pd
-
 from services.update_quotes import update_quotes
-
-
-logger = logging.getLogger(__name__)
 
 
 def download_and_update_quotes() -> None:
@@ -36,7 +30,6 @@ def download_and_update_quotes() -> None:
     )  # initial percentage
     percentage = 0.0
 
-    logger.info("Start downloading...")
     print("Start downloading...")
 
     for ticker in ["SBER", "TATN", "BSPB", "MOEX", "ROSN", "YDEX", "MGNT"]:
@@ -51,7 +44,6 @@ def download_and_update_quotes() -> None:
 
         percentage += percent_step
 
-        logger.info("Downloaded %s quotes, %.2f%% completed", ticker, percentage)
         print(f"Downloaded {ticker} quotes, {percentage:.2f}% completed")
 
     for index in ["IMOEX"]:
@@ -65,8 +57,6 @@ def download_and_update_quotes() -> None:
 
         percentage += percent_step
 
-        logger.info("Downloaded %s quotes, %.2f%% completed", index, percentage)
         print(f"Downloaded {index} quotes, {percentage:.2f}% completed")
 
-    logger.info("Downloading completed")
     print("Downloading completed")

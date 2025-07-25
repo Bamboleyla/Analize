@@ -1,4 +1,3 @@
-import logging
 import os
 import pandas as pd
 import talib
@@ -6,8 +5,6 @@ import talib
 from indicators.super_trend import super_trend
 
 __all__ = ["Manager"]
-
-logger = logging.getLogger(__name__)
 
 
 class Manager:
