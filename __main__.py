@@ -71,7 +71,7 @@ Please, enter mode:"""
         #     os.path.join(directory, "price_chanel_report.csv"), index=False
         # )
         # terminal.report(explore_date)
-        # terminal.show(explore_date)
+        terminal.show(explore_date)
     elif mode == 3:
         # Show PriceChanelGrid
         start_time = time.time()

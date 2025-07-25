@@ -1,12 +1,14 @@
 import pandas as pd
 
+from .methods.plot_data import plot_data_method
+
 __all__ = ["BigWaves"]
 
 
 class BigWaves:
     def __init__(self, config: dict) -> None:
         self.name: str = "BigWaves"
-        self.config = config
+        self._config = config
 
     def calculate(self, data: pd.DataFrame) -> pd.DataFrame:
         pass
@@ -18,4 +20,4 @@ class BigWaves:
         pass
 
     def get_plot_data(self):
-        pass
+        return plot_data_method(self)

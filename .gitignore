@@ -1,6 +1,3 @@
-# logging
-/logs
-
 # settings
 /settings.py
 
@@ -14,5 +11,5 @@ __pycache__/
 # indexes
 /indexes
 
-# tickers
-/tickers
+# data
+/data
