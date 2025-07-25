@@ -1,7 +1,5 @@
 import pandas as pd
 
-from .methods.report import report_method
-from .methods.show import show_method
 from .methods.prepare import prepare_method
 
 
@@ -15,18 +13,17 @@ class NewTerminal:
 
     def __init__(self, strategy) -> None:
         self.strategy = strategy
-        self.strategy_config = strategy.get_config()
 
     def prepare(self, quotes: pd.DataFrame) -> pd.DataFrame:
         return prepare_method(
-            quotes=quotes, indicators=self.strategy_config["indicators"]
+            quotes=quotes, indicators=self.strategy.config["indicators"]
         )
 
     def calculate(self, quotes: pd.DataFrame) -> pd.DataFrame:
-        return self.strategy.calculate(quotes)
+        return quotes
 
     def show(self, quotes: pd.DataFrame) -> None:
-        show_method(data=quotes, config=self.strategy.get_plot_data())
+        pass
 
     def report(self, quotes: pd.DataFrame) -> None:
-        report_method(data=quotes)
+        pass

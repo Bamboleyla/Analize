@@ -6,4 +6,5 @@ In this version 0.0.4:
         *Remove logger
         *Remove Terminal
         *Remove WithDoubleTrend strategy
+        *Create NewTerminal
 
