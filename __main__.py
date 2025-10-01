@@ -2,24 +2,18 @@
 
 import os
 import time
-import pandas as pd
 
 from new_terminal import NewTerminal
 from strategy import BigWaves
-from terminal import Terminal
 from services.download_and_update_quotes import download_and_update_quotes
 from services.manager import Manager
-
-from myLib.strategies import PriceChanelGrid
-from myLib.brokers import DemoBroker
-
 
 if __name__ == "__main__":
 
     MESSAGE = """Choose mode:
 1 - download historical data from Alor;
 2 - show BigWaves;
-3 - show PriceChanelGrid;
+3 - search for patterns;
 0 - exit;
                         
 Please, enter mode:"""
@@ -67,13 +61,13 @@ Please, enter mode:"""
             + str(round(calculate_completed - data_completed, 3))
             + "s"
         )
-        # explore_date.to_csv(
-        #     os.path.join(directory, "price_chanel_report.csv"), index=False
-        # )
-        # terminal.report(explore_date)
+        explore_date.to_csv(
+            os.path.join(directory, "price_chanel_report.csv"), index=False
+        )
+        terminal.report(explore_date)
         terminal.show(explore_date)
     elif mode == 3:
-        # Show PriceChanelGrid
+        # Show Big Waves
         start_time = time.time()
         manager = Manager("SBER")
         quotes = manager.get_quotes()
@@ -83,44 +77,39 @@ Please, enter mode:"""
         )
 
         directory = manager.get_directory()
-        broker = DemoBroker()
 
         config = {
             "indicators": [
                 {"type": "price_chanel", "period": 30},
                 {"type": "super_trend", "period": 30, "multiplier": 7},
             ],
-            "share": {"tiker": "SBER", "figi": "BBG004730N88"},
         }
-        strategy = PriceChanelGrid(broker, config)
-        terminal = Terminal(strategy)
+        strategy = BigWaves(config)
+        terminal = NewTerminal(strategy)
 
-        # Create empty DataFrame with columns
-        explore_date = pd.DataFrame(
-            columns=["TICKER", "DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"]
-        )
         # Calculate data
-        explore_date = terminal.prepare(quotes=quotes)
-        # Write DataFrame to file
-        explore_date.to_csv(
-            os.path.join(directory, "price_chanel_grid.csv"), index=False
-        )
+        prepared_data = terminal.prepare(quotes=quotes)
+
         data_completed = time.time()
         print(
             "Data completed..." + str(round(data_completed - quotes_completed, 3)) + "s"
         )
 
-        explore_date = terminal.calculate(explore_date)
+        explore_date = terminal.find_dependencies(prepared_data)
+
+        # Write DataFrame to file
+        explore_date.to_csv(os.path.join(directory, "examine_data.csv"), index=False)
+
         calculate_completed = time.time()
         print(
             "Calculate completed..."
             + str(round(calculate_completed - data_completed, 3))
             + "s"
         )
-        explore_date.to_csv(
-            os.path.join(directory, "price_chanel_report.csv"), index=False
-        )
-        terminal.report(explore_date)
+        # explore_date.to_csv(
+        #     os.path.join(directory, "price_chanel_report.csv"), index=False
+        # )
+        # terminal.report(explore_date)
         terminal.show(explore_date)
     # Exit
     elif mode == 0:

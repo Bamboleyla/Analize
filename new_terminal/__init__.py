@@ -1,5 +1,7 @@
 import pandas as pd
 
+from .methods.report import report_method
+from .methods.resurch.find_dependencies import find_dependencies_method
 from .methods.prepare import prepare_method
 from .methods.show import show_method
 
@@ -21,10 +23,13 @@ class NewTerminal:
         )
 
     def calculate(self, quotes: pd.DataFrame) -> pd.DataFrame:
-        return quotes
+        return self.strategy.calculate(quotes)
+
+    def find_dependencies(self, quotes: pd.DataFrame) -> pd.DataFrame:
+        return find_dependencies_method(self, quotes)
 
     def show(self, quotes: pd.DataFrame) -> None:
         show_method(data=quotes, config=self.strategy.get_plot_data())
 
     def report(self, quotes: pd.DataFrame) -> None:
-        pass
+        report_method(data=quotes)

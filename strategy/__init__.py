@@ -1,5 +1,6 @@
 import pandas as pd
 
+from .methods.calculate import calculate_method
 from .methods.plot_data import plot_data_method
 
 __all__ = ["BigWaves"]
@@ -11,7 +12,7 @@ class BigWaves:
         self._config = config
 
     def calculate(self, data: pd.DataFrame) -> pd.DataFrame:
-        pass
+        return calculate_method(data=data, indicators=self._config["indicators"])
 
     def get_config(self) -> dict:
         pass

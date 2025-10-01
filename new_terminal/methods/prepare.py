@@ -16,6 +16,7 @@ def prepare_method(quotes: pd.DataFrame, indicators) -> pd.DataFrame:
             & (new_quotes["OPEN"] == new_quotes["LOW"])
         )
     ]
+    new_quotes = new_quotes.reset_index(drop=True)
 
     for indicator in indicators:
         if indicator["type"] == "price_chanel":
@@ -32,4 +33,5 @@ def prepare_method(quotes: pd.DataFrame, indicators) -> pd.DataFrame:
             )
         else:
             raise ValueError("Indicator type is not supported")
+
     return new_quotes

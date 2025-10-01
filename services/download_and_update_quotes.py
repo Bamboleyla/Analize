@@ -25,17 +25,34 @@ def download_and_update_quotes() -> None:
         - The progress percentage is calculated based on the total number of items to process.
         - File paths are constructed using the current file's location and predefined directory structure.
     """
-    percent_step = 100 / (
-        len(["SBER", "TATN", "BSPB", "MOEX", "ROSN", "YDEX", "MGNT"]) + len(["IMOEX"])
-    )  # initial percentage
+    tickers = [
+        "SBER",
+        "SBERP",
+        "RTKM",
+        "RTKMP",
+        "BANE",
+        "BANEP",
+        "MTLR",
+        "MTLRP",
+        "TATN",
+        "TATNP",
+        "BSPB",
+        "MOEX",
+        "ROSN",
+        "YDEX",
+        "MGNT",
+        "SNGS",
+        "SNGSP",
+    ]
+    percent_step = 100 / (len(tickers) + len(["IMOEX"]))  # initial percentage
     percentage = 0.0
 
     print("Start downloading...")
 
-    for ticker in ["SBER", "TATN", "BSPB", "MOEX", "ROSN", "YDEX", "MGNT"]:
+    for ticker in tickers:
 
         file_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)) + "\\tickers\\",
+            os.path.dirname(os.path.dirname(__file__)) + "\\data\\",
             ticker,
             "data.csv",
         )  # file path for ticker
