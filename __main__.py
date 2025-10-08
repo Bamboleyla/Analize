@@ -51,16 +51,16 @@ Please, enter mode:"""
         prepared_data = terminal.prepare(quotes=quotes)
         # Write DataFrame to file
         prepared_data.to_csv(os.path.join(directory, "prepared_data.csv"), index=False)
-        data_completed = time.time()
+        data_prepared = time.time()
         print(
-            "Data completed..." + str(round(data_completed - quotes_completed, 3)) + "s"
+            "Data completed..." + str(round(data_prepared - quotes_completed, 3)) + "s"
         )
 
         explore_date = terminal.calculate(prepared_data)
         calculate_completed = time.time()
         print(
             "Calculate completed..."
-            + str(round(calculate_completed - data_completed, 3))
+            + str(round(calculate_completed - data_prepared, 3))
             + "s"
         )
         explore_date.to_csv(
@@ -82,7 +82,11 @@ Please, enter mode:"""
 
         config = {
             "indicators": [
-                {"type": "grid_chanel", "value": 10, "steps": [1.0, 2.0, 3.0, 4.0]},
+                {
+                    "type": "grid_chanel",
+                    "value": 20,
+                    "steps": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
+                },
             ],
         }
         strategy = MovingGrid(config)
@@ -95,25 +99,23 @@ Please, enter mode:"""
         #     header=0,
         # )
 
-        data_completed = time.time()
+        data_prepared = time.time()
         print(
-            "Data completed..." + str(round(data_completed - quotes_completed, 3)) + "s"
+            "Data prepared..." + str(round(data_prepared - quotes_completed, 3)) + "s"
         )
 
         explore_date = strategy.calculate(prepared_data)
 
         # Write DataFrame to file
-        explore_date.to_csv(os.path.join(directory, "examine_data.csv"), index=False)
+        explore_date.to_excel("result_grid.xlsx", index=False)
 
         calculate_completed = time.time()
         print(
             "Calculate completed..."
-            + str(round(calculate_completed - data_completed, 3))
+            + str(round(calculate_completed - data_prepared, 3))
             + "s"
         )
-        # explore_date.to_csv(
-        #     os.path.join(directory, "price_chanel_report.csv"), index=False
-        # )
+
         # terminal.report(explore_date)
         terminal.show(explore_date)
 

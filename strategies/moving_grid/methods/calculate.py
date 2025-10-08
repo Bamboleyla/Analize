@@ -66,6 +66,7 @@ def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame
             "size": -1 if position["size"] is None else position["size"] - 1,
             "avarage_price": avarage_price,
         }
+        data.loc[index, "POSITION"] = position["size"]
         data.loc[index, "SELL_PRICE"] = row[level_open_high]
         tax = round(row[level_open_high] * 0.0005, 2)
         data.loc[index, "COMMISSION"] = tax
@@ -95,8 +96,11 @@ def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame
         )
         if position["size"] + 1 == 0:
             position = {"direction": None, "size": None, "avarage_price": None}
+            data.loc[index, "POSITION"] = 0
         else:
             position["size"] += 1
+            data.loc[index, "POSITION"] = position["size"]
+
         level_open -= 1
         level_open_high = f"GC_{grid_value}_LEVEL_HIGH_{level_open if level_open < max_level else max_level}"
         level_close = (
@@ -124,6 +128,7 @@ def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame
             "size": 1 if position["size"] is None else position["size"] + 1,
             "avarage_price": avarage_price,
         }
+        data.loc[index, "POSITION"] = position["size"]
         data.loc[index, "BUY_PRICE"] = row[level_open_low]
         tax = round(row[level_open_low] * 0.0005, 2)
         data.loc[index, "COMMISSION"] = tax
@@ -153,8 +158,11 @@ def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame
         )
         if position["size"] - 1 == 0:
             position = {"direction": None, "size": None, "avarage_price": None}
+            data.loc[index, "POSITION"] = 0
         else:
             position["size"] -= 1
+            data.loc[index, "POSITION"] = position["size"]
+
         level_open -= 1
         level_open_low = f"GC_{grid_value}_LEVEL_LOW_{level_open if level_open <= max_level else max_level}"
         level_close = (
@@ -164,6 +172,12 @@ def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame
         return position, level_open, level_open_low, level_close, level_close_low
 
     for index, row in data.iterrows():
+        if index == 0:
+            row["BALANCE"] = 0
+            row["POSITION"] = 0
+        else:
+            data.loc[index, "BALANCE"] = data.loc[index - 1, "BALANCE"]
+            data.loc[index, "POSITION"] = data.loc[index - 1, "POSITION"]
         while (
             position["size"] is not None
             and position["size"] < 0
@@ -206,5 +220,5 @@ def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame
                 level_close,
                 level_close_low,
             ) = open_long(position, level_open_low, level_open, level_close)
-    data.to_excel("result_grid.xlsx", index=False)
+
     return data
