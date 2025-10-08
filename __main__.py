@@ -2,9 +2,11 @@
 
 import os
 import time
+import pandas as pd
 
-from new_terminal import NewTerminal
-from strategy import BigWaves
+from terminal import Terminal
+from strategies.big_waves import BigWaves
+from strategies.moving_grid import MovingGrid
 from services.download_and_update_quotes import download_and_update_quotes
 from services.manager import Manager
 
@@ -13,7 +15,7 @@ if __name__ == "__main__":
     MESSAGE = """Choose mode:
 1 - download historical data from Alor;
 2 - show BigWaves;
-3 - search for patterns;
+3 - launch grid strategy;
 0 - exit;
                         
 Please, enter mode:"""
@@ -43,7 +45,7 @@ Please, enter mode:"""
             ],
         }
         strategy = BigWaves(config)
-        terminal = NewTerminal(strategy)
+        terminal = Terminal(strategy)
 
         # Calculate data
         prepared_data = terminal.prepare(quotes=quotes)
@@ -67,7 +69,7 @@ Please, enter mode:"""
         terminal.report(explore_date)
         terminal.show(explore_date)
     elif mode == 3:
-        # Show Big Waves
+        # Show Grid Strategy
         start_time = time.time()
         manager = Manager("SBER")
         quotes = manager.get_quotes()
@@ -80,22 +82,25 @@ Please, enter mode:"""
 
         config = {
             "indicators": [
-                {"type": "price_chanel", "period": 30},
-                {"type": "super_trend", "period": 30, "multiplier": 7},
+                {"type": "grid_chanel", "value": 10, "steps": [1.0, 2.0, 3.0, 4.0]},
             ],
         }
-        strategy = BigWaves(config)
-        terminal = NewTerminal(strategy)
+        strategy = MovingGrid(config)
+        terminal = Terminal(strategy)
 
         # Calculate data
         prepared_data = terminal.prepare(quotes=quotes)
+        # prepared_data = pd.read_csv(
+        #     os.path.join("c:\\Users\\user\\python\\analize\\", "grid_chanel.csv"),
+        #     header=0,
+        # )
 
         data_completed = time.time()
         print(
             "Data completed..." + str(round(data_completed - quotes_completed, 3)) + "s"
         )
 
-        explore_date = terminal.find_dependencies(prepared_data)
+        explore_date = strategy.calculate(prepared_data)
 
         # Write DataFrame to file
         explore_date.to_csv(os.path.join(directory, "examine_data.csv"), index=False)
@@ -111,6 +116,7 @@ Please, enter mode:"""
         # )
         # terminal.report(explore_date)
         terminal.show(explore_date)
+
     # Exit
     elif mode == 0:
         print("Program exit")

@@ -1,8 +1,8 @@
 import pandas as pd
 
 from .methods.report import report_method
-from .methods.show import show_method
 from .methods.prepare import prepare_method
+from .methods.show import show_method
 
 
 __all__ = ["Terminal"]
@@ -15,11 +15,10 @@ class Terminal:
 
     def __init__(self, strategy) -> None:
         self.strategy = strategy
-        self.strategy_config = strategy.get_config()
 
     def prepare(self, quotes: pd.DataFrame) -> pd.DataFrame:
         return prepare_method(
-            quotes=quotes, indicators=self.strategy_config["indicators"]
+            quotes=quotes, indicators=self.strategy._config["indicators"]
         )
 
     def calculate(self, quotes: pd.DataFrame) -> pd.DataFrame:

@@ -3,7 +3,7 @@ This module contains the prepare method for the new_terminal.
 """
 
 import pandas as pd
-from myLib.indicators import price_chanel, super_trend
+from myLib.indicators import price_chanel, super_trend, grid_chanel
 
 
 def prepare_method(quotes: pd.DataFrame, indicators) -> pd.DataFrame:
@@ -16,6 +16,7 @@ def prepare_method(quotes: pd.DataFrame, indicators) -> pd.DataFrame:
             & (new_quotes["OPEN"] == new_quotes["LOW"])
         )
     ]
+    new_quotes = new_quotes.reset_index(drop=True)
 
     for indicator in indicators:
         if indicator["type"] == "price_chanel":
@@ -30,6 +31,12 @@ def prepare_method(quotes: pd.DataFrame, indicators) -> pd.DataFrame:
                     }
                 ],
             )
+        elif indicator["type"] == "grid_chanel":
+            new_quotes = grid_chanel(
+                df=new_quotes, value=indicator["value"], steps=indicator["steps"]
+            )
+            new_quotes.to_csv("grid_chanel.csv", index=False)
         else:
             raise ValueError("Indicator type is not supported")
+
     return new_quotes
