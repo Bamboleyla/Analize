@@ -7,9 +7,9 @@ def _initialize_columns(data):
     cols_to_init = [
         "BUY_PRICE",
         "SELL_PRICE",
+        "POSITION",
         "COMMISSION",
         "BALANCE",
-        "POSITION",
         "PROFIT",
     ]
     for col in cols_to_init:
@@ -19,157 +19,30 @@ def _initialize_columns(data):
 def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame:
     _initialize_columns(data)
 
-    global position
-
     grid_value = indicators[0]["value"]
-    max_level = len(indicators[0]["steps"]) - 1
 
     gc_high = f"GC_{grid_value}_HIGH"
     gc_low = f"GC_{grid_value}_LOW"
     gc_mid = f"GC_{grid_value}_MID"
 
-    level_open = 0
-    level_open_high = f"GC_{grid_value}_LEVEL_HIGH_{level_open}"
-    level_open_low = f"GC_{grid_value}_LEVEL_LOW_{level_open}"
-
-    level_close = 0
-    level_close_high = f"GC_{grid_value}_LEVEL_HIGH_{level_close}"
-    level_close_low = f"GC_{grid_value}_LEVEL_LOW_{level_close}"
-
-    position = {"direction": None, "size": None, "avarage_price": None}
-
-    def calc_avarage_price(position, price):
-        size = position["size"] if position["size"] > 0 else position["size"] * -1
-        return round((position["avarage_price"] * size + price) / (size + 1), 2)
-
-    def calc_sell_price():
-        return (
-            row[gc_mid]
-            if position["size"] == -1 or position["size"] == 1
-            else (
-                row[level_close_high]
-                if position["direction"] == "short"
-                else row[level_close_low]
-            )
-        )
-
-    def open_short(
-        position: dict, level_open_high: str, level_open: int, level_close: int
-    ):
-        avarage_price = (
-            row[level_open_high]
-            if position["size"] is None
-            else calc_avarage_price(position, row[level_open_high])
-        )
-        position = {
-            "direction": "short",
-            "size": -1 if position["size"] is None else position["size"] - 1,
-            "avarage_price": avarage_price,
+    short_grids = [
+        {
+            "size": None,
+            "price": None,
+            "line_open": f"GC_{grid_value}_LEVEL_HIGH_{i}",
+            "line_close": gc_mid if i == 0 else f"GC_{grid_value}_LEVEL_HIGH_{i-1}",
         }
-        data.loc[index, "POSITION"] = position["size"]
-        data.loc[index, "SELL_PRICE"] = row[level_open_high]
-        tax = round(row[level_open_high] * 0.0005, 2)
-        data.loc[index, "COMMISSION"] = tax
-        data.loc[index, "BALANCE"] = (
-            data.loc[index, "BALANCE"] - tax + row[level_open_high]
-        )
-        level_open += 1
-        level_open_high = f"GC_{grid_value}_LEVEL_HIGH_{level_open if level_open < max_level else max_level}"
-        level_close = 0 if position["size"] >= -2 else level_close + 1
-        level_close_high = f"GC_{grid_value}_LEVEL_HIGH_{level_close if level_close < max_level else max_level}"
-        return position, level_open, level_open_high, level_close, level_close_high
-
-    def close_short(
-        position: dict,
-        level_close_high: str,
-        level_open: int,
-        level_close: int,
-    ):
-        sell_price = row[gc_mid] if position["size"] == -1 else row[level_close_high]
-        data.loc[index, "BUY_PRICE"] = sell_price
-        tax = round(sell_price * 0.0005, 2)
-        data.loc[index, "COMMISSION"] = tax
-        data.loc[index, "BALANCE"] = data.loc[index, "BALANCE"] - tax - sell_price
-
-        data.loc[index, "PROFIT"] = round(
-            position["avarage_price"] - sell_price - (tax * 2), 2
-        )
-        if position["size"] + 1 == 0:
-            position = {"direction": None, "size": None, "avarage_price": None}
-            data.loc[index, "POSITION"] = 0
-        else:
-            position["size"] += 1
-            data.loc[index, "POSITION"] = position["size"]
-
-        level_open -= 1
-        level_open_high = f"GC_{grid_value}_LEVEL_HIGH_{level_open if level_open < max_level else max_level}"
-        level_close = (
-            0 if position["size"] is None or position["size"] == 0 else level_close - 1
-        )
-        level_close_high = f"GC_{grid_value}_LEVEL_HIGH_{level_close}"
-        return (
-            position,
-            level_open,
-            level_open_high,
-            level_close,
-            level_close_high,
-        )
-
-    def open_long(
-        position: dict, level_open_low: str, level_open: int, level_close: int
-    ):
-        avarage_price = (
-            row[level_open_low]
-            if position["size"] is None
-            else calc_avarage_price(position, row[level_open_low])
-        )
-        position = {
-            "direction": "long",
-            "size": 1 if position["size"] is None else position["size"] + 1,
-            "avarage_price": avarage_price,
+        for i in range(len(indicators[0]["steps"]))
+    ]
+    long_grids = [
+        {
+            "size": None,
+            "price": None,
+            "line_open": f"GC_{grid_value}_LEVEL_LOW_{i}",
+            "line_close": gc_mid if i == 0 else f"GC_{grid_value}_LEVEL_LOW_{i-1}",
         }
-        data.loc[index, "POSITION"] = position["size"]
-        data.loc[index, "BUY_PRICE"] = row[level_open_low]
-        tax = round(row[level_open_low] * 0.0005, 2)
-        data.loc[index, "COMMISSION"] = tax
-        data.loc[index, "BALANCE"] = (
-            data.loc[index, "BALANCE"] - tax - row[level_open_low]
-        )
-        level_open += 1
-        level_open_low = f"GC_{grid_value}_LEVEL_LOW_{level_open if level_open <= max_level else max_level}"
-        level_close = 0 if position["size"] <= 2 else level_close + 1
-        level_close_low = f"GC_{grid_value}_LEVEL_LOW_{level_close if level_close < max_level else max_level}"
-        return position, level_open, level_open_low, level_close, level_close_low
-
-    def close_long(
-        position: dict,
-        level_close_low: str,
-        level_open: int,
-        level_close: int,
-    ):
-        sell_price = row[gc_mid] if position["size"] == 1 else row[level_close_low]
-        data.loc[index, "SELL_PRICE"] = sell_price
-        tax = round(sell_price * 0.0005, 2)
-        data.loc[index, "COMMISSION"] = tax
-        data.loc[index, "BALANCE"] = data.loc[index, "BALANCE"] - tax + sell_price
-
-        data.loc[index, "PROFIT"] = round(
-            sell_price - position["avarage_price"] - (tax * 2), 2
-        )
-        if position["size"] - 1 == 0:
-            position = {"direction": None, "size": None, "avarage_price": None}
-            data.loc[index, "POSITION"] = 0
-        else:
-            position["size"] -= 1
-            data.loc[index, "POSITION"] = position["size"]
-
-        level_open -= 1
-        level_open_low = f"GC_{grid_value}_LEVEL_LOW_{level_open if level_open <= max_level else max_level}"
-        level_close = (
-            0 if position["size"] is None or position["size"] == 0 else level_close - 1
-        )
-        level_close_low = f"GC_{grid_value}_LEVEL_LOW_{level_close}"
-        return position, level_open, level_open_low, level_close, level_close_low
+        for i in range(len(indicators[0]["steps"]))
+    ]
 
     for index, row in data.iterrows():
         if index == 0:
@@ -178,47 +51,73 @@ def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame
         else:
             data.loc[index, "BALANCE"] = data.loc[index - 1, "BALANCE"]
             data.loc[index, "POSITION"] = data.loc[index - 1, "POSITION"]
-        while (
-            position["size"] is not None
-            and position["size"] < 0
-            and row["LOW"] < calc_sell_price()
-        ):
-            (
-                position,
-                level_open,
-                level_open_high,
-                level_close,
-                level_close_high,
-            ) = close_short(position, level_close_high, level_open, level_close)
 
-        while (
-            position["size"] is not None
-            and position["size"] > 0
-            and row["HIGH"] > calc_sell_price()
-        ):
-            position, level_open, level_open_low, level_close, level_close_low = (
-                close_long(position, level_close_low, level_open, level_close)
-            )
-        while row["HIGH"] > row[level_open_high] and (
-            position["size"] is None or position["size"] >= -max_level
-        ):
-            (
-                position,
-                level_open,
-                level_open_high,
-                level_close,
-                level_close_high,
-            ) = open_short(position, level_open_high, level_open, level_close)
-
-        while row["LOW"] < row[level_open_low] and (
-            position["size"] is None or position["size"] <= max_level
-        ):
-            (
-                position,
-                level_open,
-                level_open_low,
-                level_close,
-                level_close_low,
-            ) = open_long(position, level_open_low, level_open, level_close)
+        direction = "DOWN" if row["CLOSE"] < row["OPEN"] else "UP"
+        for line in long_grids:
+            if (
+                line["size"] is None
+                and row["LOW"] < row[line["line_open"]]
+                and row["HIGH"] > row[line["line_open"]]
+            ):
+                line["size"] = 1
+                line["price"] = row[line["line_open"]]
+                data.loc[index, "POSITION"] += 1
+                data.loc[index, "BUY_PRICE"] = line["price"]
+                tax = round(line["price"] * 0.0004, 2)
+                data.loc[index, "COMMISSION"] = tax
+                data.loc[index, "BALANCE"] = (
+                    data.loc[index, "BALANCE"] - tax - line["price"]
+                )
+            elif (
+                line["size"] is not None
+                and row["HIGH"] > row[line["line_close"]]
+                and row["LOW"] < row[line["line_close"]]
+            ):
+                sell_price = row[line["line_close"]]
+                data.loc[index, "SELL_PRICE"] = sell_price
+                tax = round(sell_price * 0.0004, 2)
+                data.loc[index, "COMMISSION"] = tax
+                data.loc[index, "BALANCE"] = (
+                    data.loc[index, "BALANCE"] - tax + sell_price
+                )
+                data.loc[index, "PROFIT"] = round(
+                    sell_price - line["price"] - (tax * 2), 2
+                )
+                line["size"] = None
+                line["price"] = None
+                data.loc[index, "POSITION"] -= 1
+        for line in short_grids:
+            if (
+                line["size"] is None
+                and row["LOW"] < row[line["line_open"]]
+                and row["HIGH"] > row[line["line_open"]]
+            ):
+                line["size"] = 1
+                line["price"] = row[line["line_open"]]
+                data.loc[index, "POSITION"] -= 1
+                data.loc[index, "SELL_PRICE"] = line["price"]
+                tax = round(line["price"] * 0.0004, 2)
+                data.loc[index, "COMMISSION"] = tax
+                data.loc[index, "BALANCE"] = (
+                    data.loc[index, "BALANCE"] - tax + line["price"]
+                )
+            elif (
+                line["size"] is not None
+                and row["HIGH"] > row[line["line_close"]]
+                and row["LOW"] < row[line["line_close"]]
+            ):
+                sell_price = row[line["line_close"]]
+                data.loc[index, "BUY_PRICE"] = sell_price
+                tax = round(sell_price * 0.0004, 2)
+                data.loc[index, "COMMISSION"] = tax
+                data.loc[index, "BALANCE"] = (
+                    data.loc[index, "BALANCE"] - tax - sell_price
+                )
+                data.loc[index, "PROFIT"] = round(
+                    line["price"] - sell_price - (tax * 2), 2
+                )
+                line["size"] = None
+                line["price"] = None
+                data.loc[index, "POSITION"] += 1
 
     return data
