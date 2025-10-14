@@ -19,7 +19,7 @@ def _initialize_columns(data):
 def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame:
     _initialize_columns(data)
 
-    grid_value = indicators[0]["value"]
+    grid_value = max(indicators[0]["steps"])
 
     gc_high = f"GC_{grid_value}_HIGH"
     gc_low = f"GC_{grid_value}_LOW"
@@ -68,12 +68,12 @@ def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame
                 data.loc[index, "BALANCE"] = (
                     data.loc[index, "BALANCE"] - tax - line["price"]
                 )
-            elif (
-                line["size"] is not None
-                and row["HIGH"] > row[line["line_close"]]
-                and row["LOW"] < row[line["line_close"]]
-            ):
-                sell_price = row[line["line_close"]]
+            elif line["size"] is not None and row["HIGH"] > row[line["line_close"]]:
+                sell_price = (
+                    row[line["line_close"]]
+                    if row["LOW"] < row[line["line_close"]]
+                    else row["OPEN"]
+                )
                 data.loc[index, "SELL_PRICE"] = sell_price
                 tax = round(sell_price * 0.0004, 2)
                 data.loc[index, "COMMISSION"] = tax
@@ -106,7 +106,11 @@ def calculate_method(data: pd.DataFrame, indicators: list[dict]) -> pd.DataFrame
                 and row["HIGH"] > row[line["line_close"]]
                 and row["LOW"] < row[line["line_close"]]
             ):
-                sell_price = row[line["line_close"]]
+                sell_price = (
+                    row[line["line_close"]]
+                    if row["LOW"] < row[line["line_close"]]
+                    else row["OPEN"]
+                )
                 data.loc[index, "BUY_PRICE"] = sell_price
                 tax = round(sell_price * 0.0004, 2)
                 data.loc[index, "COMMISSION"] = tax

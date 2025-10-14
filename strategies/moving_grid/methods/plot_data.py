@@ -1,7 +1,7 @@
 def plot_data_method(self) -> dict:
 
-    gc_value = self._config["indicators"][0]["value"]
     gc_steps = self._config["indicators"][0]["steps"]
+    gc_value = max(gc_steps)
 
     pc_high = f"GC_{gc_value}_HIGH"
     pc_low = f"GC_{gc_value}_LOW"
