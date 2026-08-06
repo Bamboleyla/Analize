@@ -11,20 +11,36 @@ def report_method(data: pd.DataFrame) -> None:
     if "DATE" not in data.columns:
         data = data.reset_index()
 
+    data["DATE"] = pd.to_datetime(data["DATE"])
+
     # Fill balance and position values
     data["BALANCE"] = data["BALANCE"].ffill().fillna(0)
     data["POSITION"] = data["POSITION"].ffill().fillna(0)
 
+    # Determine profit column name (TRADE_PROFIT or PROFIT)
+    if "TRADE_PROFIT" in data.columns:
+        profit_col = "TRADE_PROFIT"
+    elif "PROFIT" in data.columns:
+        profit_col = "PROFIT"
+    else:
+        data["PROFIT"] = 0.0
+        profit_col = "PROFIT"
+
     # Calculate strategy cumulative profit
-    data["CUMULATIVE_PROFIT"] = data["TRADE_PROFIT"].fillna(0).cumsum()
+    data["CUMULATIVE_PROFIT"] = data[profit_col].fillna(0).cumsum()
 
     # Create a temporary column for signal type
     data["SIGNAL_TYPE"] = None
-    data.loc[data["BUY_PRICE"].notna(), "SIGNAL_TYPE"] = "BUY"
-    data.loc[data["SELL_PRICE"].notna(), "SIGNAL_TYPE"] = "SELL"
-    data.loc[data["SL_PRICE"].notna(), "SIGNAL_TYPE"] = "STOP_LOSS"
-    data.loc[data["CT_PRICE"].notna(), "SIGNAL_TYPE"] = "CLOSE_TIME"
-    data.loc[data["CE_PRICE"].notna(), "SIGNAL_TYPE"] = "CLOSE_END"
+    signal_mapping = [
+        ("BUY_PRICE", "BUY"),
+        ("SELL_PRICE", "SELL"),
+        ("SL_PRICE", "STOP_LOSS"),
+        ("CT_PRICE", "CLOSE_TIME"),
+        ("CE_PRICE", "CLOSE_END"),
+    ]
+    for col, signal_name in signal_mapping:
+        if col in data.columns:
+            data.loc[data[col].notna(), "SIGNAL_TYPE"] = signal_name
 
     # Filter only rows with trades
     trades = data.dropna(subset=["SIGNAL_TYPE"]).copy()
@@ -99,9 +115,9 @@ def report_method(data: pd.DataFrame) -> None:
     signal_counts = trades["SIGNAL_TYPE"].value_counts()
 
     # Calculate trade statistics
-    trade_results = data.dropna(subset=["TRADE_PROFIT"]).copy()
-    profitable = (trade_results["TRADE_PROFIT"] > 0).sum()
-    unprofitable = (trade_results["TRADE_PROFIT"] <= 0).sum()
+    trade_results = data.dropna(subset=[profit_col]).copy()
+    profitable = (trade_results[profit_col] > 0).sum()
+    unprofitable = (trade_results[profit_col] <= 0).sum()
     total_trades = profitable + unprofitable
     win_rate = (profitable / total_trades * 100) if total_trades > 0 else 0
 
@@ -121,3 +137,4 @@ def report_method(data: pd.DataFrame) -> None:
     print(f"- Win Rate: {win_rate:.2f}%")
     print(f"- Final balance: {total_balance:.2f}")
     print("=" * 40)
+

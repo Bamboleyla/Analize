@@ -1,3 +1,7 @@
+import os
+
+os.environ["QT_LOGGING_RULES"] = "qt.qpa.window.warning=false"
+
 import pandas as pd
 import finplot as fplt
 

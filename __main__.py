@@ -17,7 +17,7 @@ if __name__ == "__main__":
     MESSAGE = """Choose mode:
 1 - download historical data from Alor;
 2 - show BigWaves;
-3 - launch grid strategy;
+3 - show Grid strategy;
 4 - show PriceChanel (SBER, period 40, 1h TF);
 0 - exit;
                         
@@ -72,9 +72,15 @@ Please, enter mode:"""
         terminal.report(explore_date)
         terminal.show(explore_date)
     elif mode == 3:
-        # Show Grid Strategy
+        # MovingGrid Strategy
+        print("\n--- Стратегия: MovingGrid ---")
+        print("1 - Рассчитать бэктест и показать график/отчет")
+        print("2 - Запустить модуль оптимизации параметров (шаг и количество уровней)")
+        sub_mode_input = input("Выберите действие [1 по умолчанию]: ").strip()
+        sub_mode = int(sub_mode_input) if sub_mode_input.isdigit() else 1
+
         start_time = time.time()
-        manager = Manager("SBER")
+        manager = Manager("BANE")
         quotes = manager.get_quotes()
         quotes_completed = time.time()
         print(
@@ -88,94 +94,56 @@ Please, enter mode:"""
                 {
                     "type": "grid_chanel",
                     "steps": [
-                        1,
-                        2,
-                        3,
-                        4,
-                        5,
-                        6,
-                        7,
-                        8,
-                        9,
-                        10,
-                        11,
-                        12,
-                        13,
-                        14,
-                        15,
-                        16,
-                        17,
-                        18,
-                        19,
-                        20,
-                        21,
-                        22,
-                        23,
-                        24,
-                        25,
-                        26,
-                        27,
-                        28,
-                        29,
                         30,
-                        31,
-                        32,
-                        33,
-                        34,
-                        35,
-                        36,
-                        37,
-                        38,
-                        39,
-                        40,
-                        41,
-                        42,
-                        43,
-                        44,
-                        45,
-                        46,
-                        47,
-                        48,
-                        49,
-                        50,
+                        60,
+                        90,
+                        120,
+                        150                       
                     ],
                 },
             ],
         }
         strategy = MovingGrid(config)
-        terminal = Terminal(strategy)
 
-        # Calculate data
-        prepared_data = terminal.prepare(quotes=quotes)
-        # prepared_data = pd.read_csv(
-        #     os.path.join("c:\\Users\\user\\python\\analize\\", "grid_chanel.csv"),
-        #     header=0,
-        # )
+        if sub_mode == 2:
+            strategy.optimize(quotes=quotes)
+        else:
+            terminal = Terminal(strategy)
 
-        data_prepared = time.time()
-        print(
-            "Data prepared..." + str(round(data_prepared - quotes_completed, 3)) + "s"
-        )
+            # Calculate data
+            prepared_data = terminal.prepare(quotes=quotes)
 
-        explore_date = strategy.calculate(prepared_data)
+            data_prepared = time.time()
+            print(
+                "Data prepared..." + str(round(data_prepared - quotes_completed, 3)) + "s"
+            )
 
-        # Write DataFrame to file
-        explore_date.to_excel("result_grid.xlsx", index=False)
+            calc_start = time.time()
+            explore_date = strategy.calculate(prepared_data)
+            calculate_completed = time.time()
+            print(
+                "Calculate completed..."
+                + str(round(calculate_completed - calc_start, 3))
+                + "s"
+            )
 
-        calculate_completed = time.time()
-        print(
-            "Calculate completed..."
-            + str(round(calculate_completed - data_prepared, 3))
-            + "s"
-        )
+            # Write DataFrame to file
+            export_start = time.time()
+            explore_date.to_csv("result_grid.csv", index=False)
+            export_completed = time.time()
+            print(
+                "Export completed..."
+                + str(round(export_completed - export_start, 3))
+                + "s"
+            )
 
-        # terminal.report(explore_date)
-        terminal.show(explore_date)
+            terminal.show(explore_date)
+            terminal.report(explore_date)
 
     elif mode == 4:
         # Show PriceChanel (SBER, period 40, 1h TF)
         start_time = time.time()
-        manager = Manager("ROSN")
+        manager = Manager("SBER")
         quotes = manager.get_quotes()
         quotes = resample_quotes(quotes, timeframe="1h")
         quotes_completed = time.time()

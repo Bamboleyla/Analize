@@ -49,9 +49,6 @@ def plot_data_method(self) -> dict:
         "actions": [
             {"column": "BUY_PRICE", "color": "#000000", "style": "x", "width": 2},
             {"column": "SELL_PRICE", "color": "#000000", "style": "x", "width": 2},
-            # {"column": "SL_PRICE", "color": "#000000", "style": "x", "width": 2},
-            # {"column": "CT_PRICE", "color": "#000000", "style": "x", "width": 2},
-            # {"column": "CE_PRICE", "color": "#000000", "style": "x", "width": 2},
         ],
         "signals": [
             {
@@ -72,32 +69,5 @@ def plot_data_method(self) -> dict:
                 "legend": "sell",
                 "width": 2,
             },
-            # {
-            #     "name": "STOP_LOSS",
-            #     "price_col": "SL_PRICE",
-            #     "offset": -1,
-            #     "color": "#FF5B5B",
-            #     "style": "p",
-            #     "legend": "stop loss",
-            #     "width": 2,
-            # },
-            # {
-            #     "name": "CLOSE_TIME",
-            #     "price_col": "CT_PRICE",
-            #     "offset": 1,
-            #     "color": "#3C74BD",
-            #     "style": "d",
-            #     "legend": "close time",
-            #     "width": 2,
-            # },
-            # {
-            #     "name": "CLOSE_END",
-            #     "price_col": "CE_PRICE",
-            #     "offset": 1,
-            #     "color": "#000000",
-            #     "style": "*",
-            #     "legend": "close end",
-            #     "width": 2,
-            # },
         ],
     }

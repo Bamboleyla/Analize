@@ -33,7 +33,7 @@ def prepare_method(quotes: pd.DataFrame, indicators) -> pd.DataFrame:
             )
         elif indicator["type"] == "grid_chanel":
             new_quotes = grid_chanel(df=new_quotes, steps=indicator["steps"])
-            new_quotes.to_csv("grid_chanel.csv", index=False)
+            # new_quotes.to_csv("grid_chanel.csv", index=False)
         else:
             raise ValueError("Indicator type is not supported")
 
