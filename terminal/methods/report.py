@@ -7,6 +7,10 @@ import numpy as np
 
 def report_method(data: pd.DataFrame) -> None:
     """Generate a trading strategy performance report with visualizations"""
+    data = data.copy()
+    if "DATE" not in data.columns:
+        data = data.reset_index()
+
     # Fill balance and position values
     data["BALANCE"] = data["BALANCE"].ffill().fillna(0)
     data["POSITION"] = data["POSITION"].ffill().fillna(0)
@@ -15,7 +19,7 @@ def report_method(data: pd.DataFrame) -> None:
     data["CUMULATIVE_PROFIT"] = data["TRADE_PROFIT"].fillna(0).cumsum()
 
     # Create a temporary column for signal type
-    data["SIGNAL_TYPE"] = np.nan
+    data["SIGNAL_TYPE"] = None
     data.loc[data["BUY_PRICE"].notna(), "SIGNAL_TYPE"] = "BUY"
     data.loc[data["SELL_PRICE"].notna(), "SIGNAL_TYPE"] = "SELL"
     data.loc[data["SL_PRICE"].notna(), "SIGNAL_TYPE"] = "STOP_LOSS"
@@ -77,7 +81,7 @@ def report_method(data: pd.DataFrame) -> None:
 
     # Date format settings
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
-    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     plt.xticks(rotation=45)
 
     # Axis and legend settings

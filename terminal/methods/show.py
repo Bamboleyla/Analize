@@ -11,15 +11,16 @@ def show_method(data: pd.DataFrame, config: dict) -> None:
     if missing_columns:
         raise ValueError(f"There are no mandatory columns: {missing_columns}")
 
-    # Create candlestick chart
-    data.set_index("DATE", inplace=True)
-    data.index = pd.to_datetime(data.index).tz_localize("Etc/GMT-5")
-    fplt.candlestick_ochl(data[["OPEN", "CLOSE", "HIGH", "LOW"]])
+    # Work on a local copy to avoid mutating caller's DataFrame
+    df = data.copy()
+    df.set_index("DATE", inplace=True)
+    df.index = pd.to_datetime(df.index).tz_localize("Etc/GMT-5")
+    fplt.candlestick_ochl(df[["OPEN", "CLOSE", "HIGH", "LOW"]])
 
     # Plot indicators
     for plot in config["plots"]:
         fplt.plot(
-            data[plot["column"]],
+            df[plot["column"]],
             legend=plot["column"],
             color=plot["color"],
             width=plot["width"],
@@ -27,7 +28,7 @@ def show_method(data: pd.DataFrame, config: dict) -> None:
 
     # Plot actions (points)
     for action in config["actions"]:
-        col_data = data[action["column"]].dropna()
+        col_data = df[action["column"]].dropna()
         if not col_data.empty:
             fplt.plot(
                 col_data,
@@ -39,7 +40,7 @@ def show_method(data: pd.DataFrame, config: dict) -> None:
 
     # Plot signals (special markers)
     for signal in config["signals"]:
-        col_data = data[signal["price_col"]].dropna()
+        col_data = df[signal["price_col"]].dropna()
         if not col_data.empty:
             fplt.plot(
                 col_data + signal.get("offset", 0),
@@ -51,3 +52,4 @@ def show_method(data: pd.DataFrame, config: dict) -> None:
 
     fplt.add_legend(config["legend"])
     fplt.show()
+
